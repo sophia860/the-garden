@@ -5,7 +5,15 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-// Add page imports here
+import SiteLayout from './components/layout/SiteLayout';
+import Home from './pages/Home';
+import Writers from './pages/Writers';
+import Journals from './pages/Journals';
+import Editions from './pages/Editions';
+import Residency from './pages/Residency';
+import About from './pages/About';
+import Pricing from './pages/Pricing';
+import Manifesto from './pages/Manifesto';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -33,8 +41,17 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
-      <Route path="*" element={<PageNotFound />} />
+      <Route element={<SiteLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/writers" element={<Writers />} />
+        <Route path="/journals" element={<Journals />} />
+        <Route path="/editions" element={<Editions />} />
+        <Route path="/residency" element={<Residency />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/manifesto" element={<Manifesto />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Route>
     </Routes>
   );
 };
