@@ -14,6 +14,7 @@ import Residency from './pages/Residency';
 import About from './pages/About';
 import Pricing from './pages/Pricing';
 import Manifesto from './pages/Manifesto';
+import GardenGraph from './pages/GardenGraph';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -50,6 +51,7 @@ const AuthenticatedApp = () => {
         <Route path="/about" element={<About />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/manifesto" element={<Manifesto />} />
+        <Route path="/garden/graph" element={<GardenGraph />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
