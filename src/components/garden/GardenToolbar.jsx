@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Network, Plus, SlidersHorizontal } from 'lucide-react';
+import { Search, Network, Plus, Pencil, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const STATES = ['all', 'seed', 'sprout', 'bloom'];
@@ -17,6 +17,7 @@ export default function GardenToolbar({
   sort, onSort,
   viewMode, onViewMode,
   onNew,
+  onExport,
 }) {
   return (
     <div className="space-y-3">
@@ -95,6 +96,26 @@ export default function GardenToolbar({
         >
           ↗ Map
         </Link>
+
+        {/* Emotional writing studio */}
+        <Link
+          to="/garden/write"
+          className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest border border-foreground text-foreground hover:bg-foreground hover:text-white px-3 py-2 transition-colors whitespace-nowrap"
+          title="Open emotional writing studio"
+        >
+          <Pencil className="w-3.5 h-3.5" /> Write
+        </Link>
+
+        {/* Export */}
+        {onExport && (
+          <button
+            onClick={onExport}
+            className="p-2 border border-border text-muted-foreground hover:border-foreground/30 transition-colors"
+            title="Export fragments"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+        )}
 
         {/* New */}
         <button

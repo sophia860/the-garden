@@ -18,6 +18,7 @@ import GardenGraph from './pages/GardenGraph.jsx';
 import GardenFeed from './pages/GardenFeed';
 import GardenInsights from './pages/GardenInsights';
 import Garden from './pages/Garden';
+import WritingStudio from './pages/WritingStudio';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -57,6 +58,7 @@ const AuthenticatedApp = () => {
         <Route path="/garden/graph" element={<GardenGraph />} />
         <Route path="/garden/feed" element={<GardenFeed />} />
         <Route path="/garden/insights" element={<GardenInsights />} />
+        <Route path="/garden/write" element={<WritingStudio />} />
         <Route path="/garden" element={<Garden />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
