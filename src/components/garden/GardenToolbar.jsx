@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, Network, Plus, SlidersHorizontal } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const STATES = ['all', 'seed', 'sprout', 'bloom'];
 const SORT_OPTIONS = [
@@ -67,6 +68,15 @@ export default function GardenToolbar({
         >
           <Network className="w-4 h-4" />
         </button>
+
+        {/* Full graph page */}
+        <Link
+          to="/garden/graph"
+          className="font-mono text-[10px] uppercase tracking-widest border border-border text-muted-foreground hover:border-foreground hover:text-foreground px-3 py-2 transition-colors whitespace-nowrap"
+          title="Open full network map"
+        >
+          ↗ Map
+        </Link>
 
         {/* New */}
         <button

@@ -14,7 +14,7 @@ import Residency from './pages/Residency';
 import About from './pages/About';
 import Pricing from './pages/Pricing';
 import Manifesto from './pages/Manifesto';
-import GardenGraph from './pages/GardenGraph';
+import GardenGraph from './pages/GardenGraph.jsx';
 import Garden from './pages/Garden';
 
 const AuthenticatedApp = () => {

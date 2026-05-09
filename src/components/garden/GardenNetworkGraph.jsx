@@ -1,252 +1,266 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// ── Demo data ──────────────────────────────────────────────────────────────────
-const DEMO_NODES = [
-  { id: 'n1',  label: 'On grief and geography',        state: 'bloom',  tags: ['grief', 'sea', 'mothers'] },
-  { id: 'n2',  label: 'Tidal thought',                 state: 'sprout', tags: ['sea', 'repetition', 'memory'] },
-  { id: 'n3',  label: 'The body as weather system',    state: 'seed',   tags: ['grief', 'illness', 'time'] },
-  { id: 'n4',  label: 'Letter to my mother\'s hands',  state: 'bloom',  tags: ['mothers', 'hands', 'craft'] },
-  { id: 'n5',  label: 'What the ferry remembers',      state: 'sprout', tags: ['sea', 'memory', 'travel'] },
-  { id: 'n6',  label: 'Chronic time',                  state: 'seed',   tags: ['illness', 'time', 'slowness'] },
-  { id: 'n7',  label: 'On finishing things badly',     state: 'bloom',  tags: ['craft', 'failure', 'repetition'] },
-  { id: 'n8',  label: 'Mediocrity as method',          state: 'sprout', tags: ['failure', 'craft', 'process'] },
-  { id: 'n9',  label: 'Draft zero',                    state: 'seed',   tags: ['process', 'hands', 'writing'] },
-  { id: 'n10', label: 'The unrecorded dream',          state: 'bloom',  tags: ['memory', 'grief', 'writing'] },
-  { id: 'n11', label: 'Slowness as resistance',        state: 'sprout', tags: ['slowness', 'illness', 'craft'] },
-  { id: 'n12', label: 'Salt and repetition',           state: 'seed',   tags: ['sea', 'repetition', 'memory'] },
-];
+// ── Force simulation ────────────────────────────────────────────────────────
+function runForce(nodes, edges, dims, iterations = 180) {
+  const W = dims.width, H = dims.height;
+  const cx = W / 2, cy = H / 2;
 
-// ── Derive edges from shared tags ─────────────────────────────────────────────
+  // initialise positions on a circle
+  const pos = {};
+  nodes.forEach((n, i) => {
+    const angle = (2 * Math.PI * i) / nodes.length - Math.PI / 2;
+    const r = Math.min(W, H) * 0.32;
+    pos[n.id] = {
+      x: cx + r * Math.cos(angle) + (Math.random() - 0.5) * 20,
+      y: cy + r * Math.sin(angle) + (Math.random() - 0.5) * 20,
+      vx: 0, vy: 0,
+    };
+  });
+
+  const edgeSet = new Set(edges.map(e => `${e.source}-${e.target}`));
+  const connected = (a, b) => edgeSet.has(`${a}-${b}`) || edgeSet.has(`${b}-${a}`);
+
+  for (let iter = 0; iter < iterations; iter++) {
+    const alpha = 1 - iter / iterations;
+
+    // repulsion
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = pos[nodes[i].id], b = pos[nodes[j].id];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+        const force = (7000 / (dist * dist)) * alpha;
+        const fx = (dx / dist) * force, fy = (dy / dist) * force;
+        a.vx -= fx; a.vy -= fy;
+        b.vx += fx; b.vy += fy;
+      }
+    }
+
+    // attraction
+    edges.forEach(e => {
+      const a = pos[e.source], b = pos[e.target];
+      if (!a || !b) return;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+      const target = 120;
+      const force = ((dist - target) / dist) * 0.12 * alpha;
+      const fx = dx * force, fy = dy * force;
+      a.vx += fx; a.vy += fy;
+      b.vx -= fx; b.vy -= fy;
+    });
+
+    // gravity toward center
+    nodes.forEach(n => {
+      const p = pos[n.id];
+      p.vx += (cx - p.x) * 0.006 * alpha;
+      p.vy += (cy - p.y) * 0.006 * alpha;
+    });
+
+    // integrate + damping
+    nodes.forEach(n => {
+      const p = pos[n.id];
+      p.vx *= 0.72; p.vy *= 0.72;
+      p.x = Math.max(60, Math.min(W - 60, p.x + p.vx));
+      p.y = Math.max(60, Math.min(H - 60, p.y + p.vy));
+    });
+  }
+
+  return Object.fromEntries(Object.entries(pos).map(([id, { x, y }]) => [id, { x, y }]));
+}
+
 function buildEdges(nodes) {
   const edges = [];
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
-      const shared = nodes[i].tags.filter(t => nodes[j].tags.includes(t));
+      const shared = (nodes[i].tags || []).filter(t => (nodes[j].tags || []).includes(t));
       if (shared.length > 0) {
-        edges.push({ source: nodes[i].id, target: nodes[j].id, tags: shared });
+        edges.push({ source: nodes[i].id, target: nodes[j].id, tags: shared, weight: shared.length });
       }
     }
   }
   return edges;
 }
 
-// ── Simple force-ish initial layout on a circle ───────────────────────────────
-function initialPositions(nodes, width, height) {
-  const cx = width / 2, cy = height / 2;
-  const r = Math.min(width, height) * 0.35;
-  return nodes.reduce((acc, node, i) => {
-    const angle = (2 * Math.PI * i) / nodes.length - Math.PI / 2;
-    acc[node.id] = { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
-    return acc;
-  }, {});
-}
-
-const STATE_COLOR = {
-  seed:   { fill: '#f5f0e8', stroke: '#a89880', label: 'Seed' },
-  sprout: { fill: '#e8f0e8', stroke: '#6b8f71', label: 'Sprout' },
-  bloom:  { fill: '#1a1a1a', stroke: '#1a1a1a', label: 'Bloom' },
+const STATE_STYLE = {
+  seed:   { fill: '#fff',    stroke: '#000', textFill: '#000', glyph: '·',  r: 12, label: 'Seed'   },
+  sprout: { fill: '#f0f0f0', stroke: '#000', textFill: '#000', glyph: '↑',  r: 14, label: 'Sprout' },
+  bloom:  { fill: '#000',    stroke: '#000', textFill: '#fff', glyph: '✦',  r: 18, label: 'Bloom'  },
 };
 
-const TAG_COLORS = [
-  '#c9b8a8','#8fb08f','#a8b8c8','#c8a8a8','#b8a8c8',
-  '#c8c8a8','#a8c8c8','#c8b0a0','#b0c8a8','#a0a8b8',
-];
-
-export default function GardenNetworkGraph({ nodes = DEMO_NODES }) {
+export default function GardenNetworkGraph({ nodes = [] }) {
   const containerRef = useRef(null);
-  const [dims, setDims] = useState({ width: 700, height: 520 });
-  const [positions, setPositions] = useState({});
+  const [dims, setDims] = useState({ width: 800, height: 540 });
+  const [positions, setPositions] = useState(null);
   const [dragging, setDragging] = useState(null);
   const [selected, setSelected] = useState(null);
-  const [hoveredEdge, setHoveredEdge] = useState(null);
+  const [hovered, setHovered] = useState(null);
   const [filterTag, setFilterTag] = useState(null);
+  const [filterState, setFilterState] = useState(null);
   const dragOffset = useRef({ x: 0, y: 0 });
 
-  const edges = buildEdges(nodes);
-  const allTags = [...new Set(nodes.flatMap(n => n.tags))].sort();
-  const tagColorMap = allTags.reduce((acc, tag, i) => {
-    acc[tag] = TAG_COLORS[i % TAG_COLORS.length];
-    return acc;
-  }, {});
+  const edges = useMemo(() => buildEdges(nodes), [nodes]);
+  const allTags = useMemo(() => [...new Set(nodes.flatMap(n => n.tags || []))].sort(), [nodes]);
 
   // Measure container
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(entries => {
-      const { width, height } = entries[0].contentRect;
-      setDims({ width, height });
+    const ro = new ResizeObserver(([entry]) => {
+      const { width } = entry.contentRect;
+      setDims({ width, height: Math.max(480, Math.min(width * 0.65, 640)) });
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
-  // Place nodes when dims are ready
+  // Run force layout when nodes or dims change
   useEffect(() => {
-    setPositions(initialPositions(nodes, dims.width, dims.height));
-  }, [dims.width, dims.height, nodes.length]);
+    if (nodes.length === 0) return;
+    const result = runForce(nodes, edges, dims);
+    setPositions(result);
+  }, [nodes.length, dims.width, dims.height]);
 
-  // ── Drag ──────────────────────────────────────────────────────────────────
-  const onNodeMouseDown = useCallback((e, id) => {
-    e.stopPropagation();
-    const svgEl = containerRef.current.querySelector('svg');
+  // ── Drag helpers ────────────────────────────────────────────────────────
+  const getSVGPoint = useCallback((clientX, clientY) => {
+    const svgEl = containerRef.current?.querySelector('svg');
+    if (!svgEl) return { x: 0, y: 0 };
     const pt = svgEl.createSVGPoint();
-    pt.x = e.clientX; pt.y = e.clientY;
-    const svgPt = pt.matrixTransform(svgEl.getScreenCTM().inverse());
-    dragOffset.current = { x: svgPt.x - positions[id].x, y: svgPt.y - positions[id].y };
+    pt.x = clientX; pt.y = clientY;
+    return pt.matrixTransform(svgEl.getScreenCTM().inverse());
+  }, []);
+
+  const startDrag = useCallback((id, clientX, clientY) => {
+    const sp = getSVGPoint(clientX, clientY);
+    dragOffset.current = {
+      x: sp.x - (positions?.[id]?.x || 0),
+      y: sp.y - (positions?.[id]?.y || 0),
+    };
     setDragging(id);
     setSelected(id);
-  }, [positions]);
+  }, [positions, getSVGPoint]);
 
   useEffect(() => {
     if (!dragging) return;
-    const svgEl = containerRef.current?.querySelector('svg');
-    if (!svgEl) return;
-
     const onMove = (e) => {
-      const pt = svgEl.createSVGPoint();
-      pt.x = e.clientX; pt.y = e.clientY;
-      const sp = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+      const client = e.touches ? e.touches[0] : e;
+      const sp = getSVGPoint(client.clientX, client.clientY);
       setPositions(prev => ({
         ...prev,
-        [dragging]: { x: sp.x - dragOffset.current.x, y: sp.y - dragOffset.current.y }
+        [dragging]: {
+          x: Math.max(60, Math.min(dims.width - 60, sp.x - dragOffset.current.x)),
+          y: Math.max(60, Math.min(dims.height - 60, sp.y - dragOffset.current.y)),
+        },
       }));
     };
     const onUp = () => setDragging(null);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-  }, [dragging]);
-
-  // Touch drag
-  useEffect(() => {
-    if (!dragging) return;
-    const svgEl = containerRef.current?.querySelector('svg');
-    if (!svgEl) return;
-    const onMove = (e) => {
-      const touch = e.touches[0];
-      const pt = svgEl.createSVGPoint();
-      pt.x = touch.clientX; pt.y = touch.clientY;
-      const sp = pt.matrixTransform(svgEl.getScreenCTM().inverse());
-      setPositions(prev => ({
-        ...prev,
-        [dragging]: { x: sp.x - dragOffset.current.x, y: sp.y - dragOffset.current.y }
-      }));
-    };
-    const onEnd = () => setDragging(null);
     window.addEventListener('touchmove', onMove, { passive: true });
-    window.addEventListener('touchend', onEnd);
-    return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('touchend', onEnd); };
-  }, [dragging]);
+    window.addEventListener('touchend', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
+    };
+  }, [dragging, dims, getSVGPoint]);
 
-  const onNodeTouchStart = useCallback((e, id) => {
-    const touch = e.touches[0];
-    const svgEl = containerRef.current.querySelector('svg');
-    const pt = svgEl.createSVGPoint();
-    pt.x = touch.clientX; pt.y = touch.clientY;
-    const svgPt = pt.matrixTransform(svgEl.getScreenCTM().inverse());
-    dragOffset.current = { x: svgPt.x - positions[id].x, y: svgPt.y - positions[id].y };
-    setDragging(id);
-    setSelected(id);
-  }, [positions]);
-
-  // ── Filtering helpers ─────────────────────────────────────────────────────
-  const visibleNodeIds = filterTag
-    ? new Set(nodes.filter(n => n.tags.includes(filterTag)).map(n => n.id))
-    : new Set(nodes.map(n => n.id));
+  // ── Filtering ──────────────────────────────────────────────────────────
+  const visibleIds = useMemo(() => {
+    return new Set(
+      nodes
+        .filter(n => (!filterTag || (n.tags || []).includes(filterTag)))
+        .filter(n => (!filterState || n.state === filterState))
+        .map(n => n.id)
+    );
+  }, [nodes, filterTag, filterState]);
 
   const selectedNode = nodes.find(n => n.id === selected);
+  const connectedEdges = selected ? edges.filter(e => e.source === selected || e.target === selected) : [];
 
-  if (Object.keys(positions).length === 0) {
-    return <div ref={containerRef} className="w-full h-[520px] flex items-center justify-center">
-      <span className="font-mono text-xs text-foreground/30">loading graph…</span>
-    </div>;
+  if (!positions || nodes.length === 0) {
+    return (
+      <div ref={containerRef} className="w-full h-[480px] border border-black flex items-center justify-center bg-white">
+        <span className="font-mono text-xs text-black/30 animate-pulse">
+          {nodes.length === 0 ? 'no fragments to map yet.' : 'growing the graph…'}
+        </span>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full space-y-4">
-      {/* Tag filter pills */}
-      <div className="flex flex-wrap gap-2 px-1">
-        <button
-          onClick={() => setFilterTag(null)}
-          className={`font-mono text-xs px-3 py-1 border transition-colors ${!filterTag ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:border-foreground/40'}`}
-        >
-          all
-        </button>
-        {allTags.map(tag => (
+    <div className="w-full space-y-4 bg-white">
+      {/* Controls row */}
+      <div className="flex flex-wrap gap-3 items-center justify-between">
+        {/* Tag pills */}
+        <div className="flex flex-wrap gap-1.5">
           <button
-            key={tag}
-            onClick={() => setFilterTag(filterTag === tag ? null : tag)}
-            className={`font-mono text-xs px-3 py-1 border transition-colors ${filterTag === tag ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:border-foreground/40'}`}
-            style={filterTag === tag ? {} : { borderLeftColor: tagColorMap[tag], borderLeftWidth: 3 }}
+            onClick={() => { setFilterTag(null); setFilterState(null); }}
+            className={`font-mono text-[10px] uppercase tracking-widest px-3 py-1 border transition-colors ${!filterTag && !filterState ? 'bg-black text-white border-black' : 'border-black/20 text-black/40 hover:border-black hover:text-black'}`}
           >
-            {tag}
+            all
           </button>
-        ))}
+          {['seed', 'sprout', 'bloom'].map(s => (
+            <button
+              key={s}
+              onClick={() => setFilterState(filterState === s ? null : s)}
+              className={`font-mono text-[10px] uppercase tracking-widest px-3 py-1 border transition-colors ${filterState === s ? 'bg-black text-white border-black' : 'border-black/20 text-black/40 hover:border-black hover:text-black'}`}
+            >
+              {STATE_STYLE[s].glyph} {s}
+            </button>
+          ))}
+          {allTags.slice(0, 10).map(tag => (
+            <button
+              key={tag}
+              onClick={() => setFilterTag(filterTag === tag ? null : tag)}
+              className={`font-mono text-[10px] uppercase tracking-widest px-3 py-1 border transition-colors ${filterTag === tag ? 'bg-black text-white border-black' : 'border-black/20 text-black/40 hover:border-black hover:text-black'}`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+        <p className="font-mono text-[10px] text-black/25 hidden md:block">
+          {nodes.length} fragments · {edges.length} connections
+        </p>
       </div>
 
-      {/* Graph canvas */}
+      {/* Canvas */}
       <div
         ref={containerRef}
-        className="w-full border border-border relative select-none overflow-hidden"
-        style={{ height: 520, cursor: dragging ? 'grabbing' : 'default' }}
+        className="w-full border border-black relative select-none overflow-hidden bg-white"
         onClick={() => setSelected(null)}
+        style={{
+          height: dims.height,
+          cursor: dragging ? 'grabbing' : 'default',
+          backgroundImage: 'linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }}
       >
-        <svg
-          width={dims.width}
-          height={dims.height}
-          className="absolute inset-0"
-        >
-          <defs>
-            {allTags.map(tag => (
-              <marker
-                key={tag}
-                id={`arrow-${tag}`}
-                markerWidth="6" markerHeight="6"
-                refX="5" refY="3"
-                orient="auto"
-              >
-                <path d="M0,0 L6,3 L0,6 Z" fill={tagColorMap[tag]} opacity="0.6" />
-              </marker>
-            ))}
-          </defs>
-
+        <svg width={dims.width} height={dims.height} className="absolute inset-0">
           {/* Edges */}
           {edges.map((edge, i) => {
-            const s = positions[edge.source];
-            const t = positions[edge.target];
+            const s = positions[edge.source], t = positions[edge.target];
             if (!s || !t) return null;
-            const bothVisible = visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target);
-            if (!bothVisible) return null;
-            const isHighlighted = hoveredEdge === i || (selected && (edge.source === selected || edge.target === selected));
-            const tagColor = tagColorMap[edge.tags[0]];
-            const mx = (s.x + t.x) / 2 + (t.y - s.y) * 0.15;
-            const my = (s.y + t.y) / 2 - (t.x - s.x) * 0.15;
+            if (!visibleIds.has(edge.source) || !visibleIds.has(edge.target)) return null;
+            const isHighlighted = hovered === i || (selected && (edge.source === selected || edge.target === selected));
+            const mx = (s.x + t.x) / 2 + (t.y - s.y) * 0.12;
+            const my = (s.y + t.y) / 2 - (t.x - s.x) * 0.12;
             return (
               <g key={i}>
                 <path
                   d={`M${s.x},${s.y} Q${mx},${my} ${t.x},${t.y}`}
-                  stroke={tagColor}
-                  strokeWidth={isHighlighted ? 2 : 1}
+                  stroke="#000"
+                  strokeWidth={isHighlighted ? edge.weight + 1 : 0.75}
                   fill="none"
-                  opacity={isHighlighted ? 0.9 : 0.25}
-                  strokeDasharray={isHighlighted ? 'none' : '4 3'}
-                  style={{ transition: 'opacity 0.2s, stroke-width 0.2s' }}
-                  onMouseEnter={() => setHoveredEdge(i)}
-                  onMouseLeave={() => setHoveredEdge(null)}
+                  opacity={isHighlighted ? 0.7 : 0.12}
+                  strokeDasharray={isHighlighted ? 'none' : '3 4'}
+                  style={{ transition: 'opacity 0.2s, stroke-width 0.15s' }}
+                  onMouseEnter={() => setHovered(i)}
+                  onMouseLeave={() => setHovered(null)}
                 />
-                {/* Edge tag label on hover */}
                 {isHighlighted && (
-                  <text
-                    x={mx} y={my}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize="9"
-                    fontFamily="monospace"
-                    fill={tagColor}
-                    opacity="0.9"
-                  >
+                  <text x={mx} y={my - 6} textAnchor="middle" fontSize="8" fontFamily="monospace" fill="#000" opacity="0.5">
                     {edge.tags.join(' · ')}
                   </text>
                 )}
@@ -257,128 +271,138 @@ export default function GardenNetworkGraph({ nodes = DEMO_NODES }) {
           {/* Nodes */}
           {nodes.map(node => {
             const pos = positions[node.id];
-            if (!pos || !visibleNodeIds.has(node.id)) return null;
-            const { fill, stroke } = STATE_COLOR[node.state];
+            if (!pos || !visibleIds.has(node.id)) return null;
+            const st = STATE_STYLE[node.state] || STATE_STYLE.seed;
             const isSelected = selected === node.id;
-            const r = isSelected ? 22 : 16;
+            const r = isSelected ? st.r + 5 : st.r;
             return (
               <g
                 key={node.id}
                 transform={`translate(${pos.x},${pos.y})`}
-                onMouseDown={e => onNodeMouseDown(e, node.id)}
-                onTouchStart={e => onNodeTouchStart(e, node.id)}
+                onMouseDown={e => { e.stopPropagation(); startDrag(node.id, e.clientX, e.clientY); }}
+                onTouchStart={e => { e.stopPropagation(); startDrag(node.id, e.touches[0].clientX, e.touches[0].clientY); }}
                 style={{ cursor: 'grab' }}
               >
-                {/* Glow ring when selected */}
                 {isSelected && (
-                  <circle r={r + 6} fill="none" stroke={stroke} strokeWidth="1" opacity="0.2" />
+                  <circle r={r + 8} fill="none" stroke="#000" strokeWidth="0.5" opacity="0.2" strokeDasharray="2 3" />
                 )}
                 <circle
                   r={r}
-                  fill={fill}
-                  stroke={stroke}
+                  fill={st.fill}
+                  stroke={st.stroke}
                   strokeWidth={isSelected ? 2 : 1.5}
                   style={{ transition: 'r 0.15s ease' }}
                 />
-                {/* State glyph */}
                 <text
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize={node.state === 'bloom' ? '13' : '11'}
-                  fill={node.state === 'bloom' ? '#fff' : stroke}
-                  style={{ pointerEvents: 'none' }}
+                  fontSize={node.state === 'bloom' ? 12 : 10}
+                  fill={st.textFill}
+                  style={{ pointerEvents: 'none', userSelect: 'none' }}
                 >
-                  {node.state === 'seed' ? '·' : node.state === 'sprout' ? '↑' : '✦'}
+                  {st.glyph}
                 </text>
-                {/* Label */}
                 <text
-                  y={r + 10}
+                  y={r + 11}
                   textAnchor="middle"
                   fontSize="9"
                   fontFamily="monospace"
-                  fill={isSelected ? '#1a1a1a' : '#666'}
-                  fontWeight={isSelected ? '600' : '400'}
-                  style={{ pointerEvents: 'none', whiteSpace: 'pre' }}
+                  fill={isSelected ? '#000' : '#555'}
+                  fontWeight={isSelected ? '700' : '400'}
+                  style={{ pointerEvents: 'none', userSelect: 'none' }}
                 >
-                  {node.label.length > 22 ? node.label.slice(0, 21) + '…' : node.label}
+                  {node.label.length > 24 ? node.label.slice(0, 23) + '…' : node.label}
                 </text>
               </g>
             );
           })}
         </svg>
 
-        {/* Hint */}
-        <p className="absolute bottom-3 right-4 font-mono text-[10px] text-foreground/20 pointer-events-none">
-          drag nodes · click to inspect · filter by tag
+        <p className="absolute bottom-3 right-4 font-mono text-[9px] text-black/15 pointer-events-none">
+          drag · click to inspect · filter above
         </p>
       </div>
 
-      {/* Node inspector */}
+      {/* Inspector panel */}
       <AnimatePresence>
         {selectedNode && (
           <motion.div
             key={selectedNode.id}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
-            transition={{ duration: 0.25 }}
-            className="border border-border p-5 bg-white"
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.2 }}
+            className="border border-black p-6 bg-white"
+            onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <p className="font-mono text-xs text-muted-foreground mb-1 uppercase tracking-widest">
-                  {STATE_COLOR[selectedNode.state].label}
+            <div className="flex items-start gap-8 flex-wrap">
+              <div className="flex-1 min-w-0">
+                <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-black/30 mb-1">
+                  {STATE_STYLE[selectedNode.state]?.glyph} {selectedNode.state}
                 </p>
-                <h3 className="font-serif text-lg font-bold mb-3">{selectedNode.label}</h3>
+                <h3 className="font-serif text-xl font-black text-black mb-3 leading-tight">{selectedNode.label}</h3>
                 <div className="flex flex-wrap gap-2">
-                  {selectedNode.tags.map(tag => (
+                  {(selectedNode.tags || []).map(tag => (
                     <button
                       key={tag}
                       onClick={() => setFilterTag(filterTag === tag ? null : tag)}
-                      className="font-mono text-xs px-2 py-0.5 border hover:bg-foreground hover:text-background transition-colors"
-                      style={{ borderLeftColor: tagColorMap[tag], borderLeftWidth: 3 }}
+                      className={`font-mono text-[10px] uppercase tracking-widest px-2.5 py-1 border transition-colors ${filterTag === tag ? 'bg-black text-white border-black' : 'border-black/30 text-black/50 hover:border-black hover:text-black'}`}
                     >
                       {tag}
                     </button>
                   ))}
                 </div>
               </div>
-              {/* Connected nodes */}
-              <div className="hidden md:block text-right min-w-[180px]">
-                <p className="font-mono text-xs text-muted-foreground mb-2 uppercase tracking-widest">Connected to</p>
-                {edges
-                  .filter(e => e.source === selectedNode.id || e.target === selectedNode.id)
-                  .map((e, i) => {
-                    const otherId = e.source === selectedNode.id ? e.target : e.source;
-                    const other = nodes.find(n => n.id === otherId);
-                    return (
-                      <button
-                        key={i}
-                        className="block text-right w-full font-body text-xs text-muted-foreground hover:text-foreground transition-colors mb-1 truncate"
-                        onClick={ev => { ev.stopPropagation(); setSelected(otherId); }}
-                      >
-                        <span className="text-foreground/30 mr-1">via {e.tags.join(', ')} →</span>
-                        {other?.label}
-                      </button>
-                    );
-                  })
-                }
-              </div>
+
+              {connectedEdges.length > 0 && (
+                <div className="min-w-[200px] max-w-xs">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-black/30 mb-2">
+                    Connected ({connectedEdges.length})
+                  </p>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {connectedEdges.map((e, i) => {
+                      const otherId = e.source === selectedNode.id ? e.target : e.source;
+                      const other = nodes.find(n => n.id === otherId);
+                      return (
+                        <button
+                          key={i}
+                          className="flex items-center gap-2 w-full text-left group"
+                          onClick={() => setSelected(otherId)}
+                        >
+                          <span className="font-mono text-[9px] text-black/25 shrink-0">
+                            {e.tags.join(', ')} →
+                          </span>
+                          <span className="font-body text-xs text-black/50 group-hover:text-black transition-colors truncate">
+                            {other?.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Legend */}
-      <div className="flex gap-6 px-1">
-        {Object.entries(STATE_COLOR).map(([state, { fill, stroke, label }]) => (
+      <div className="flex gap-6 flex-wrap">
+        {Object.entries(STATE_STYLE).map(([state, { fill, stroke, glyph, label }]) => (
           <div key={state} className="flex items-center gap-2">
-            <svg width="18" height="18">
-              <circle cx="9" cy="9" r="7" fill={fill} stroke={stroke} strokeWidth="1.5" />
+            <svg width="20" height="20">
+              <circle cx="10" cy="10" r="8" fill={fill} stroke={stroke} strokeWidth="1.5" />
+              <text x="10" y="10" textAnchor="middle" dominantBaseline="middle" fontSize="9" fill={fill === '#000' ? '#fff' : '#000'}>{glyph}</text>
             </svg>
-            <span className="font-mono text-xs text-muted-foreground">{label}</span>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-black/50">{label}</span>
           </div>
         ))}
+        <div className="flex items-center gap-2">
+          <svg width="28" height="10">
+            <line x1="0" y1="5" x2="28" y2="5" stroke="#000" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.3" />
+          </svg>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-black/50">shared tag</span>
+        </div>
       </div>
     </div>
   );
