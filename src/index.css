@@ -6,24 +6,24 @@
 
 @layer base {
   :root {
-    --background: 40 33% 96%;
-    --foreground: 30 10% 12%;
-    --card: 40 30% 94%;
-    --card-foreground: 30 10% 12%;
-    --popover: 40 33% 96%;
-    --popover-foreground: 30 10% 12%;
-    --primary: 30 10% 12%;
-    --primary-foreground: 40 33% 96%;
-    --secondary: 40 20% 90%;
-    --secondary-foreground: 30 10% 12%;
-    --muted: 40 15% 91%;
-    --muted-foreground: 30 5% 45%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 8%;
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+    --primary: 0 0% 8%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 8%;
+    --muted: 0 0% 93%;
+    --muted-foreground: 0 0% 40%;
     --accent: 150 15% 42%;
-    --accent-foreground: 40 33% 96%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 30 15% 78%;
-    --input: 30 15% 78%;
+    --border: 0 0% 82%;
+    --input: 0 0% 82%;
     --ring: 30 10% 12%;
     --chart-1: 150 15% 42%;
     --chart-2: 30 30% 60%;
@@ -101,6 +101,46 @@
   padding-top: 0.15rem;
   font-weight: 700;
   color: hsl(var(--foreground));
+}
+
+/* Manifesto / zine styles */
+.manifesto-scratch {
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
+}
+
+.manifesto-strikethrough {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  opacity: 0.5;
+}
+
+.manifesto-handwritten {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.1em;
+  letter-spacing: 0.01em;
+}
+
+.manifesto-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  opacity: 0.4;
+}
+
+.manifesto-col-rule {
+  border-left: 1px solid hsl(var(--border));
+  padding-left: 1.5rem;
+}
+
+@keyframes scribble-in {
+  from { opacity: 0; transform: translateY(6px) rotate(-0.3deg); }
+  to   { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+.scribble-in {
+  animation: scribble-in 0.6s ease both;
 }
 
 /* Horizontal rule styles */
