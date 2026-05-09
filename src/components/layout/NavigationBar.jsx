@@ -8,6 +8,7 @@ const navLinks = [
   { label: 'Journals', path: '/journals' },
   { label: 'Editions', path: '/editions' },
   { label: 'Residency', path: '/residency' },
+  { label: 'Reading Room', path: '/garden/feed' },
   { label: 'About', path: '/about' },
   { label: 'Pricing', path: '/pricing' },
   { label: 'Manifesto', path: '/manifesto' },

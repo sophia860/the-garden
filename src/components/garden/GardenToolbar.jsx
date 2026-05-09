@@ -69,6 +69,15 @@ export default function GardenToolbar({
           <Network className="w-4 h-4" />
         </button>
 
+        {/* Feed */}
+        <Link
+          to="/garden/feed"
+          className="font-mono text-[10px] uppercase tracking-widest border border-border text-muted-foreground hover:border-foreground hover:text-foreground px-3 py-2 transition-colors whitespace-nowrap"
+          title="Reading room — public fragments"
+        >
+          ↗ Feed
+        </Link>
+
         {/* Full graph page */}
         <Link
           to="/garden/graph"

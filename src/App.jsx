@@ -15,6 +15,7 @@ import About from './pages/About';
 import Pricing from './pages/Pricing';
 import Manifesto from './pages/Manifesto';
 import GardenGraph from './pages/GardenGraph.jsx';
+import GardenFeed from './pages/GardenFeed';
 import Garden from './pages/Garden';
 
 const AuthenticatedApp = () => {
@@ -53,6 +54,7 @@ const AuthenticatedApp = () => {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/manifesto" element={<Manifesto />} />
         <Route path="/garden/graph" element={<GardenGraph />} />
+        <Route path="/garden/feed" element={<GardenFeed />} />
         <Route path="/garden" element={<Garden />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
