@@ -69,6 +69,15 @@ export default function GardenToolbar({
           <Network className="w-4 h-4" />
         </button>
 
+        {/* Insights */}
+        <Link
+          to="/garden/insights"
+          className="font-mono text-[10px] uppercase tracking-widest border border-border text-muted-foreground hover:border-foreground hover:text-foreground px-3 py-2 transition-colors whitespace-nowrap"
+          title="Writing patterns & insights"
+        >
+          ↗ Insights
+        </Link>
+
         {/* Feed */}
         <Link
           to="/garden/feed"
