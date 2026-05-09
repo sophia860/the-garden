@@ -3,20 +3,37 @@ import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
-    <footer className="border-t-2 border-foreground bg-background">
-      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16">
-        {/* Top row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
-          <div>
-            <h3 className="font-serif text-2xl font-bold mb-4">The Garden</h3>
-            <p className="font-body text-sm text-muted-foreground leading-relaxed max-w-xs">
-              A platform interested in the hands, not just the parcel.
+    <footer className="bg-black text-white border-t-4 border-black">
+      {/* Big wordmark strip */}
+      <div className="border-b border-white/10 overflow-hidden py-8 px-6 lg:px-10">
+        <p
+          className="font-serif font-black leading-none text-white/10 select-none whitespace-nowrap"
+          style={{ fontSize: 'clamp(4rem, 14vw, 12rem)' }}
+        >
+          The Garden
+        </p>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-14">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-14">
+          {/* Brand */}
+          <div className="md:col-span-2">
+            <h3 className="font-serif text-2xl font-black mb-4 text-white">The Garden</h3>
+            <p className="font-body text-sm text-white/50 leading-relaxed max-w-xs">
+              A platform interested in the hands, not just the parcel. Free for writers. Forever.
             </p>
+            <Link
+              to="/garden"
+              className="mt-6 inline-block font-mono text-xs uppercase tracking-widest border border-white/30 px-5 py-2.5 hover:bg-white hover:text-black transition-colors"
+            >
+              Enter the Garden
+            </Link>
           </div>
 
+          {/* Navigate */}
           <div>
-            <h4 className="font-mono text-xs uppercase tracking-widest mb-4 text-muted-foreground">Navigate</h4>
-            <div className="space-y-2">
+            <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] mb-5 text-white/30">Navigate</h4>
+            <div className="space-y-2.5">
               {[
                 { label: 'Writers', path: '/writers' },
                 { label: 'Journals', path: '/journals' },
@@ -24,54 +41,36 @@ export default function Footer() {
                 { label: 'Residency', path: '/residency' },
                 { label: 'About', path: '/about' },
               ].map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className="block font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
+                <Link key={link.path} to={link.path} className="block font-mono text-xs text-white/50 hover:text-white transition-colors uppercase tracking-widest">
                   {link.label}
                 </Link>
               ))}
             </div>
           </div>
 
+          {/* More */}
           <div>
-            <h4 className="font-mono text-xs uppercase tracking-widest mb-4 text-muted-foreground">Join</h4>
-            <div className="space-y-3">
-              <Link
-                to="/writers"
-                className="block font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Join as a writer
-              </Link>
-              <Link
-                to="/journals"
-                className="block font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Join as a journal
-              </Link>
-              <Link
-                to="/pricing"
-                className="block font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Pricing
-              </Link>
-              <Link
-                to="/manifesto"
-                className="block font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Read the Manifesto
-              </Link>
+            <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] mb-5 text-white/30">More</h4>
+            <div className="space-y-2.5">
+              {[
+                { label: 'Pricing', path: '/pricing' },
+                { label: 'Manifesto', path: '/manifesto' },
+                { label: 'Garden', path: '/garden' },
+              ].map((link) => (
+                <Link key={link.path} to={link.path} className="block font-mono text-xs text-white/50 hover:text-white transition-colors uppercase tracking-widest">
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Bottom rule + colophon */}
-        <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <p className="font-mono text-xs text-muted-foreground tracking-wide">
-            © {new Date().getFullYear()} The Page Gallery. All rights reserved.
+        {/* Bottom */}
+        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <p className="font-mono text-[10px] text-white/30 tracking-widest uppercase">
+            © {new Date().getFullYear()} The Page Gallery · Arrayan Ediciones
           </p>
-          <p className="font-mono text-xs text-muted-foreground tracking-wide italic">
+          <p className="font-serif text-sm italic text-white/20">
             Not a feed, but a garden.
           </p>
         </div>

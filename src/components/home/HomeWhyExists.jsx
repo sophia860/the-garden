@@ -10,13 +10,13 @@ export default function HomeWhyExists() {
       ctaText="Read the full founding essay"
       ctaLink="/manifesto"
     >
-      <div className="md:columns-2 md:gap-12 font-body text-base md:text-lg text-muted-foreground leading-relaxed">
+      <div className="md:columns-2 md:gap-12 font-body text-base md:text-lg text-black/60 leading-relaxed">
         <p className="mb-4">
           Every writing platform makes the same gesture: a blank box, a word count, a submit button.
           The infrastructure assumes the work happens somewhere else.
           It wants the parcel, not the hands that made it.
         </p>
-        <p className="mb-4 font-serif text-foreground text-lg md:text-xl italic">
+        <p className="mb-4 font-serif text-black font-black text-lg md:text-xl italic">
           The Garden was built for the hands.
         </p>
         <p className="mb-4">

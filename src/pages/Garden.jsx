@@ -89,7 +89,9 @@ export default function Garden() {
       </AnimatePresence>
 
       {/* Page header */}
-      <div className="border-b border-border px-6 lg:px-10 py-8">
+      <div className="border-b border-black px-6 lg:px-10 py-8"
+        style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+      >
         <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-6 flex-wrap gap-4">
             <div>
