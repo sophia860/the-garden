@@ -47,7 +47,7 @@ export default function NavigationBar() {
             {/* Desktop CTA */}
             <div className="hidden lg:block">
               <Link
-                to="/"
+                to="/garden"
                 className="font-mono text-xs uppercase tracking-widest border border-foreground px-4 py-2 hover:bg-foreground hover:text-background transition-colors"
               >
                 Enter the Garden
@@ -92,7 +92,7 @@ export default function NavigationBar() {
               ))}
               <hr className="editorial-rule" />
               <Link
-                to="/"
+                to="/garden"
                 onClick={() => setIsOpen(false)}
                 className="inline-block font-mono text-xs uppercase tracking-widest border border-foreground px-4 py-2"
               >

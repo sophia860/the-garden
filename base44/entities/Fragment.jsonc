@@ -1,0 +1,54 @@
+{
+  "name": "Fragment",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title or working title of the fragment"
+    },
+    "body": {
+      "type": "string",
+      "description": "The full text content of the fragment"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "seed",
+        "sprout",
+        "bloom"
+      ],
+      "default": "seed",
+      "description": "The growth state of the fragment"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Tags linking this fragment to others"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "private",
+        "circle",
+        "public"
+      ],
+      "default": "private",
+      "description": "Who can see this fragment"
+    },
+    "word_count": {
+      "type": "number",
+      "description": "Approximate word count"
+    },
+    "pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this fragment is pinned to the top"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

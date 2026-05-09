@@ -23,7 +23,7 @@ export default function Home() {
           </p>
         }
         primaryCta="Enter the Garden"
-        primaryCtaLink="/"
+        primaryCtaLink="/garden"
         secondaryCta="Read the founding essay"
         secondaryCtaLink="/manifesto"
         large
