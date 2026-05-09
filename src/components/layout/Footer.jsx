@@ -4,15 +4,6 @@ import { Link } from 'react-router-dom';
 export default function Footer() {
   return (
     <footer className="bg-black text-white border-t-4 border-black">
-      {/* Big wordmark strip */}
-      <div className="border-b border-white/10 overflow-hidden py-8 px-6 lg:px-10">
-        <p
-          className="font-serif font-black leading-none text-white/10 select-none whitespace-nowrap"
-          style={{ fontSize: 'clamp(4rem, 14vw, 12rem)' }}
-        >
-          The Garden
-        </p>
-      </div>
 
       <div className="max-w-7xl mx-auto px-6 lg:px-10 py-14">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-14">
